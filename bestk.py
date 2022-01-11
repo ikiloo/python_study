@@ -10,7 +10,7 @@ def get_ror(k=0.5):
     fee = 0.05
     df['ror'] = np.where(df['high'] > df['target'],
                          df['close'] / df['target'] - fee,
-                         2)
+                         1)
 
     ror = df['ror'].cumprod()[-2]
     return ror
