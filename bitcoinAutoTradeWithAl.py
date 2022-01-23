@@ -3,7 +3,7 @@ import pyupbit
 import datetime
 import requests
 import schedule
-from fbprophet import Prophet
+# from fbprophet import Prophet
 
 access = "AA"
 secret = "BB"
