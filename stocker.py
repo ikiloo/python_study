@@ -1,6 +1,6 @@
 import requests
 
-myToken = "xoxb-3002182518544-2991571896097-bAwKGB5kaLEWoJ4gQkL9x0ey"
+myToken = "xoxb-3002182518544-2995384619396-xxUuokQqwxpnFR225RnOqj0R"
 
 def post_message(token, channel, text):
     """슬랙 메시지 전송"""
@@ -9,4 +9,4 @@ def post_message(token, channel, text):
         data={"channel": channel,"text": text}
     )
 
-post_message(myToken,"#stock_ai", "autotrade start")
+post_message(myToken,"#call_bit", "autotrade start??")

@@ -5,9 +5,9 @@ import requests
 import schedule
 from fbprophet import Prophet
 
-access = "your-access"
-secret = "your-secret"
-myToken = "xoxb-your-token"
+access = "0FvRFt9vKBV5zVpkx1mvsaZOi2kWyy2Lp99IcTxL"
+secret = "17Oy38dD8BeVqr4teRETmpcTXlFzPwLc5Xe6gR8M"
+myToken = "xoxb-3002182518544-2995384619396-xxUuokQqwxpnFR225RnOqj0R"
 
 def post_message(token, channel, text):
     """슬랙 메시지 전송"""
@@ -49,32 +49,32 @@ def get_current_price(ticker):
     """현재가 조회"""
     return pyupbit.get_orderbook(ticker=ticker)["orderbook_units"][0]["ask_price"]
 
-predicted_close_price = 0
-def predict_price(ticker):
-    """Prophet으로 당일 종가 가격 예측"""
-    global predicted_close_price
-    df = pyupbit.get_ohlcv(ticker, interval="minute60")
-    df = df.reset_index()
-    df['ds'] = df['index']
-    df['y'] = df['close']
-    data = df[['ds','y']]
-    model = Prophet()
-    model.fit(data)
-    future = model.make_future_dataframe(periods=24, freq='H')
-    forecast = model.predict(future)
-    closeDf = forecast[forecast['ds'] == forecast.iloc[-1]['ds'].replace(hour=9)]
-    if len(closeDf) == 0:
-        closeDf = forecast[forecast['ds'] == data.iloc[-1]['ds'].replace(hour=9)]
-    closeValue = closeDf['yhat'].values[0]
-    predicted_close_price = closeValue
-predict_price("KRW-BTC")
-schedule.every().hour.do(lambda: predict_price("KRW-BTC"))
+# predicted_close_price = 0
+# def predict_price(ticker):
+#     """Prophet으로 당일 종가 가격 예측"""
+#     global predicted_close_price
+#     df = pyupbit.get_ohlcv(ticker, interval="minute60")
+#     df = df.reset_index()
+#     df['ds'] = df['index']
+#     df['y'] = df['close']
+#     data = df[['ds','y']]
+#     model = Prophet()
+#     model.fit(data)
+#     future = model.make_future_dataframe(periods=24, freq='H')
+#     forecast = model.predict(future)
+#     closeDf = forecast[forecast['ds'] == forecast.iloc[-1]['ds'].replace(hour=9)]
+#     if len(closeDf) == 0:
+#         closeDf = forecast[forecast['ds'] == data.iloc[-1]['ds'].replace(hour=9)]
+#     closeValue = closeDf['yhat'].values[0]
+#     predicted_close_price = closeValue
+# predict_price("KRW-BTC")
+# schedule.every().hour.do(lambda: predict_price("KRW-BTC"))
 
 # 로그인
 upbit = pyupbit.Upbit(access, secret)
 print("autotrade start")
 # 시작 메세지 슬랙 전송
-post_message(myToken,"#crypto", "autotrade start")
+post_message(myToken,"#call_bit", "autotrade start")
 
 # 자동매매 시작
 while True:
@@ -83,25 +83,27 @@ while True:
         start_time = get_start_time("KRW-BTC")
         end_time = start_time + datetime.timedelta(days=1)
         schedule.run_pending()
-
+        
         if start_time < now < end_time - datetime.timedelta(seconds=10):
-            target_price = get_target_price("KRW-BTC", 0.5)
+            target_price = get_target_price("KRW-BTC", 0.2)
             ma15 = get_ma15("KRW-BTC")
             current_price = get_current_price("KRW-BTC")
-            if target_price < current_price and current_price < predicted_close_price and ma15 < current_price:
+            # print(target_price,current_price)
+            if target_price < current_price:
+                # and ma15 < current_price:
                 krw = get_balance("KRW")
                 if krw > 5000:
                     # 매수
                     buy_result = upbit.buy_market_order("KRW-BTC", krw*0.9995)
-                    post_message(myToken,"#crypto", "BTC buy : " +str(buy_result))
+                    post_message(myToken,"#call_bit", "BTC buy : " +str(buy_result))
         else:
             btc = get_balance("BTC")
             if btc > 0.00008:
                 # 매도
                 sell_result = upbit.sell_market_order("KRW-BTC", btc*0.9995)
-                post_message(myToken,"#crypto", "BTC buy : " +str(sell_result))
+                post_message(myToken,"#call_bit", "BTC buy : " +str(sell_result))
         time.sleep(1)
     except Exception as e:
         print(e)
-        post_message(myToken,"#crypto", e)
+        post_message(myToken,"#call_bit", e)
         time.sleep(1)
