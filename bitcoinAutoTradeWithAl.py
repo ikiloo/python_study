@@ -3,7 +3,7 @@ import pyupbit
 import datetime
 import requests
 import schedule
-# from fbprophet import Prophet
+from fbprophet import Prophet
 
 access = "AA"
 secret = "BB"
@@ -49,32 +49,32 @@ def get_current_price(ticker):
     """현재가 조회"""
     return pyupbit.get_orderbook(ticker=ticker)["orderbook_units"][0]["ask_price"]
 
-# predicted_close_price = 0
-# def predict_price(ticker):
-#     """Prophet으로 당일 종가 가격 예측"""
-#     global predicted_close_price
-#     df = pyupbit.get_ohlcv(ticker, interval="minute60")
-#     df = df.reset_index()
-#     df['ds'] = df['index']
-#     df['y'] = df['close']
-#     data = df[['ds','y']]
-#     model = Prophet()
-#     model.fit(data)
-#     future = model.make_future_dataframe(periods=24, freq='H')
-#     forecast = model.predict(future)
-#     closeDf = forecast[forecast['ds'] == forecast.iloc[-1]['ds'].replace(hour=9)]
-#     if len(closeDf) == 0:
-#         closeDf = forecast[forecast['ds'] == data.iloc[-1]['ds'].replace(hour=9)]
-#     closeValue = closeDf['yhat'].values[0]
-#     predicted_close_price = closeValue
-# predict_price("KRW-BTC")
-# schedule.every().hour.do(lambda: predict_price("KRW-BTC"))
+predicted_close_price = 0
+def predict_price(ticker):
+    """Prophet으로 당일 종가 가격 예측"""
+    global predicted_close_price
+    df = pyupbit.get_ohlcv(ticker, interval="minute60")
+    df = df.reset_index()
+    df['ds'] = df['index']
+    df['y'] = df['close']
+    data = df[['ds','y']]
+    model = Prophet()
+    model.fit(data)
+    future = model.make_future_dataframe(periods=24, freq='H')
+    forecast = model.predict(future)
+    closeDf = forecast[forecast['ds'] == forecast.iloc[-1]['ds'].replace(hour=9)]
+    if len(closeDf) == 0:
+        closeDf = forecast[forecast['ds'] == data.iloc[-1]['ds'].replace(hour=9)]
+    closeValue = closeDf['yhat'].values[0]
+    predicted_close_price = closeValue
+predict_price("KRW-BTC")
+schedule.every().hour.do(lambda: predict_price("KRW-BTC"))
 
 # 로그인
 upbit = pyupbit.Upbit(access, secret)
 print("autotrade start")
 # 시작 메세지 슬랙 전송
-post_message(myToken,"#call_bit", "autotrade start")
+post_message(myToken,"#yes", "autotrade start")
 
 # 자동매매 시작
 while True:
@@ -95,15 +95,15 @@ while True:
                 if krw > 5000:
                     # 매수
                     buy_result = upbit.buy_market_order("KRW-BTC", krw*0.9995)
-                    post_message(myToken,"#call_bit", "BTC buy : " +str(buy_result))
+                    post_message(myToken,"#yes", "BTC buy : " +str(buy_result))
         else:
             btc = get_balance("BTC")
             if btc > 0.00008:
                 # 매도
                 sell_result = upbit.sell_market_order("KRW-BTC", btc*0.9995)
-                post_message(myToken,"#call_bit", "BTC buy : " +str(sell_result))
+                post_message(myToken,"#yes", "BTC buy : " +str(sell_result))
         time.sleep(1)
     except Exception as e:
         print(e)
-        post_message(myToken,"#call_bit", e)
+        post_message(myToken,"#yes", e)
         time.sleep(1)
